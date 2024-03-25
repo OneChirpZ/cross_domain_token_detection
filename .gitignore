@@ -1,4 +1,5 @@
 har_files/
+./temp.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

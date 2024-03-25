@@ -6,7 +6,7 @@
 
 ```python
 # 打印格式化后的 HAR 文件
-print(json.dumps(har['log']['entries'], indent=2, ensure_ascii=False))
+print(json.dumps(har['log']['entries'], indent=2, ensure_ascii=False, sort_keys=True))
 ```
 
 ### 2. har 中的一个 entry 的结构
@@ -32,6 +32,13 @@ print(json.dumps(har['log']['entries'], indent=2, ensure_ascii=False))
 |---response
 |---startedDateTime
 |---cache
+|---md5 (预处理后新增，用于标识每个 entry)
 |
 ```
 
+### dumps entry 来产生哈希值时的设置
+
+```python
+# 保证设置了 sort_keys=True, 不加 indent
+json.dumps(entry, ensure_ascii=False, sort_keys=True)
+```
