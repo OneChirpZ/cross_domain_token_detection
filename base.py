@@ -5,6 +5,7 @@ token_prefixes = ['session', 'access', 'auth', 'oauth', 'user', 'client', 'api',
 token_others = ['jwt', 'bearer']
 
 bold_split = "============================================"
+thin_split = "--------------------------------------------"
 
 
 def is_token_key(param_keyname, level=0):
