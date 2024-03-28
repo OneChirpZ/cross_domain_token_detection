@@ -1,11 +1,8 @@
-from urllib.parse import parse_qs, urlparse
+import hashlib
+import json
+import os
 
-token_key_names = ['key', 'token', 'secret', 'signature']
-token_prefixes = ['session', 'access', 'auth', 'oauth', 'user', 'client', 'api', 'refresh']
-token_others = ['jwt', 'bearer']
-
-bold_split = "============================================"
-thin_split = "--------------------------------------------"
+from global_config import token_key_names, token_others, bold_split, thin_split
 
 
 def is_token_key(param_keyname, level=0):
@@ -33,65 +30,62 @@ def is_token_key(param_keyname, level=0):
     return False
 
 
-def find_tokens_in_url(url, level=0):
+def get_md5_from_entry(entry):
     """
-    从 URL 中提取 tokens
-    :param url: 完整的 URL
-    :param level: 检测等级
-    :return: 返回提取到的 tokens 字典
-    """
-
-    tokens = {}
-
-    try:
-        query = urlparse(url).query
-        params = parse_qs(query)
-
-        for key, values in params.items():
-            if is_token_key(key, level):
-                tokens[key] = values[0]
-
-    except Exception as e:
-        print(f'Error parsing URL: {e}')
-
-    return tokens
-
-
-def find_tokens_in_headers(headers, level=0):
-    """
-    从 headers 中提取 tokens
-    :param headers: headers 字典
-    :param level: 检测等级
-    :return: 返回提取到的 tokens 字典
+    从 entry 中获取 md5, 如果没有则生成并添加到 entry 中
+    :param entry: entry 字典
+    :return: 返回 md5
     """
 
-    tokens = {}
+    if 'md5' not in entry.keys():
+        entry_str = json.dumps(entry, ensure_ascii=False, sort_keys=True)
+        entry_hash = hashlib.md5(entry_str.encode()).hexdigest()
+        entry['md5'] = entry_hash
 
-    for key, value in headers.items():
-        if is_token_key(key, level):
-            tokens[key] = value
-
-    return tokens
-
-
-def test():
-    """测试函数"""
-
-    test_url = ('https://www.example.com/service/v1/'
-                '?access_token=456'
-                '&auth_secret=7A8b9C'
-                '&time_stamp=12315'  # not a token
-                '&user_id=65535'  # not a token
-                '&client_bearer=gHi'
-                '&token=a7a8XksAA78'
-                '&api_key=jk342l123'
-                '&refresh_token=mNo')
-
-    for i in range(3):
-        tokens = find_tokens_in_url(test_url, i)
-        print(f'level {i} find {len(tokens)} tokens: {tokens}\n{bold_split}')
+    return entry['md5']
 
 
-if __name__ == '__main__':
-    test()
-    pass
+def get_entries_with_str(har_path, target_str, enable_print=False):
+    """在 har 的 entries 中，查找包含特定字符串的 entry，返回符合条件的 entry 列表"""
+
+    with open(har_path, "r", encoding="utf-8-sig") as f:
+        har = json.load(f)
+
+    count = 0
+    res = []
+
+    for entry in har['log']['entries']:
+        url = entry['request']['url']
+
+        entry_str = json.dumps(entry, ensure_ascii=False, sort_keys=True)
+        if target_str in entry_str:
+            count += 1
+            res.append(entry)
+            if enable_print:
+                # print(entry_str)
+                print(url)
+                print(bold_split)
+
+    if enable_print:
+        print(f"find {count} entries with target string: '{target_str}'\n{thin_split}")
+
+    return res
+
+
+def get_entry_by_md5(har, md5):
+    """
+    通过 md5 获取 entry
+    :param har: har 字典对象或 .har 文件路径
+    :param md5: entry 的 md5
+    :return: 返回 entry，找不到则返回 None
+    """
+
+    if isinstance(har, str) and os.path.exists(har):
+        with open(har, "r", encoding="utf-8-sig") as f:
+            har = json.load(f)
+
+    for entry in har['log']['entries']:
+        if get_md5_from_entry(entry) == md5:
+            return entry
+
+    return None
