@@ -1,7 +1,8 @@
 import json
 import os
 
-from base import get_md5_from_entry, get_entry_by_md5
+from base import get_md5_from_entry
+from debug_tools import get_entry_by_md5
 from find_tokens import find_tokens_in_url, find_tokens_in_headers, find_tokens_in_post_body
 from get_values import get_values_from_entry
 from global_config import bold_split, thin_split
@@ -51,9 +52,10 @@ def find_tokens_by_keyname(har, enable_print=False):
     return res
 
 
-def find_tokens_by_compare(har, enable_print=False, only_multi=False):
+def find_tokens_by_compare(har, enable_print=False, only_multi=False, enable_stopwords=True):
     """
     通过比较的方式，查找 har 中的 tokens
+    :param enable_stopwords: 使用停用词过滤
     :param har: har 文件路径或 har 字典
     :param enable_print: 是否打印详细信息到控制台
     :param only_multi: 是否只打印多次出现的 tokens
@@ -71,7 +73,7 @@ def find_tokens_by_compare(har, enable_print=False, only_multi=False):
     for entry in har['log']['entries']:
         md5 = get_md5_from_entry(entry)
 
-        values = get_values_from_entry(entry, enable_stopwords=True)
+        values = get_values_from_entry(entry, enable_stopwords=enable_stopwords)
 
         if values:
             for value in values:
@@ -128,29 +130,25 @@ def test_all(only_hash=False, enable_print=True):
     print(f"HAR files tested: {count}\n{bold_split}")
 
 
-def test_cross_domain_detection(only_hash=True, enable_print=False, only_multi=True):
+def test_cross_domain_detection(file_list=None,
+                                only_hash=True,
+                                enable_print=False,
+                                only_multi=True,
+                                enable_stopwords=True):
     """
     测试跨域请求检测
     """
 
-    har_files = os.listdir("./har_files")
-    count = 0
-    for har_file in har_files:
-        if not har_file.endswith(".har"):
-            continue
-        if only_hash and not har_file.endswith("_md5.har"):
-            continue
-
-        har_path = os.path.join("./har_files", har_file)
-
+    def do_test(har_path):
+        file_name = os.path.basename(har_path)
         with open(har_path, "r", encoding="utf-8-sig") as f:
             har = json.load(f)
 
-        count += 1
-        print(f'\n{bold_split}\nFind tokens by compare, processing "{har_file}"...')
+        print(f'\n{bold_split}\nFind tokens by compare, processing "{file_name}"...')
         res_compare = find_tokens_by_compare(har,
                                              enable_print=enable_print,
-                                             only_multi=only_multi)
+                                             only_multi=only_multi,
+                                             enable_stopwords=enable_stopwords)
 
         value_domain = {}
         for value, md5_list in res_compare.items():
@@ -169,22 +167,47 @@ def test_cross_domain_detection(only_hash=True, enable_print=False, only_multi=T
                 have_cross_domain = True
                 group_domain = [get_domain(group[0][0], domain_level=0) for group in res]
 
-                print(f"value: {value}\n"
+                print(f"token value: {value}\n"
                       f"group by domain: {res}\n"
                       f"domain of each group: {group_domain}\n"
-                      f"len of res subgroup: {[len(g) for g in res]}\n"
+                      f"len of each group: {[len(g) for g in res]}\n"
                       f"{thin_split}")
 
         if not have_cross_domain:
-            print(f'No cross domain detected in "{har_file}".\n{bold_split}')
+            print(f'No cross domain detected in "{file_name}".\n{bold_split}')
 
-    print(f'HAR files tested: {count}\n{bold_split}')
+    if file_list is None:
+        count = 0
+
+        har_files = os.listdir("./har_files")
+        for har_file in har_files:
+            if not har_file.endswith(".har"):
+                continue
+            if only_hash and not har_file.endswith("_md5.har"):
+                continue
+
+            har_path = os.path.join("./har_files", har_file)
+            do_test(har_path)
+            count += 1
+
+        print(f'HAR files tested: {count}\n{bold_split}')
+    else:
+        for har_path in file_list:
+            do_test(har_path)
+
+        print(f'HAR files tested: {len(file_list)}\n{bold_split}')
 
 
 if __name__ == '__main__':
     # find_tokens_by_keyname("./har_files/meituan_md5.har", enable_print=True)
+
     # find_tokens_by_compare("./har_files/GaoDe_240324_md5.har", enable_print=True, only_multi=True)
+
     # test_all(only_hash=True, enable_print=True)
-    test_cross_domain_detection()
+
+    # test_cross_domain_detection()
+
+    test_cross_domain_detection(file_list=['har_files/MeiTuan_240324_md5.har'],
+                                enable_stopwords=False)
 
     pass

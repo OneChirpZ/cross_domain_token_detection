@@ -1,4 +1,3 @@
-import json
 from urllib.parse import urlparse, parse_qs
 
 from global_config import stop_words_key, min_token_len
