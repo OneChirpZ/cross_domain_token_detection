@@ -42,8 +42,8 @@ def get_values_from_headers(headers, enable_stopwords=True, min_len=min_token_le
             continue
 
         # for debug
-        if header_item['value'].find('iPhone10,3') != -1:
-            print(f'key: {header_item["name"]}, value: {header_item["value"]}')
+        # if header_item['value'].find('iPhone10,3') != -1:
+        #     print(f'key: {header_item["name"]}, value: {header_item["value"]}')
 
         values.append(header_item['value'])
 
@@ -94,6 +94,19 @@ def get_values_from_cookies(cookies, enable_stopwords=True, min_len=min_token_le
 
     for cookie in cookies:
         # TODO: 从 cookie 中提取 value
-        pass
+        if enable_stopwords and cookie['name'].lower() in stop_words:
+            continue
+
+        if len(cookie['value']) < min_len:
+            continue
+
+        # 不确定对value进行过滤是否会错过信息，暂注释掉
+        # if enable_stopwords and cookie['value'].lower() in value_stop_words:
+        #     continue
+
+        # for debug
+        # print(f'COOKIE_KEY: {cookie["name"]}, COOKIE_VALUE: {cookie["value"]}')
+
+        values.append(cookie['value'])
 
     return list(set(values))

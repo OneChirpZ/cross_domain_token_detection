@@ -16,7 +16,10 @@ def is_token_key(param_keyname, level=0):
     :return: 返回是否为token
     """
 
-    param_keyname = param_keyname.lower()
+    if isinstance(param_keyname, str):
+        param_keyname = param_keyname.lower()
+    else:
+        return False
 
     if param_keyname in token_key_names:
         return True

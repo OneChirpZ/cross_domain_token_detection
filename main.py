@@ -2,7 +2,7 @@ import json
 import os
 
 from base import get_md5_from_entry
-from find_tokens import find_tokens_in_url, find_tokens_in_headers
+from find_tokens import find_tokens_in_url, find_tokens_in_headers, find_tokens_in_post_body
 from get_values import get_values_from_entry
 from global_config import bold_split, thin_split
 
@@ -27,10 +27,13 @@ def find_tokens_by_keyname(har_path, enable_print=False):
 
         headers = entry['request']['headers']
 
+        post_data = entry['request']['postData']
+
         tokens_url = find_tokens_in_url(url, level=2)
         tokens_headers = find_tokens_in_headers(headers, level=2)
+        tokens_post_body = find_tokens_in_post_body(post_data, level=2)
 
-        tokens = {**tokens_url, **tokens_headers}  # 合并两个字典
+        tokens = {**tokens_url, **tokens_headers, **tokens_post_body}  # 合并两个字典
         if tokens:
             tokens_found += 1
             res[md5] = tokens
@@ -114,7 +117,7 @@ def test_all(only_hash=False):
 
 
 if __name__ == '__main__':
-    # find_tokens_by_keyname("./har_files/GaoDe_240324.har", enable_print=True)
+    # find_tokens_by_keyname("./har_files/meituan_md5.har", enable_print=True)
     # find_tokens_by_compare("./har_files/GaoDe_240324_md5.har", enable_print=True, only_multi=True)
     test_all(only_hash=True)
     pass
