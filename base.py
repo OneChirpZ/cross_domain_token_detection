@@ -80,15 +80,17 @@ def get_entry_by_md5(har, md5):
     通过 md5 获取 entry
     :param har: har 字典对象或 .har 文件路径
     :param md5: entry 的 md5
-    :return: 返回 entry，找不到则返回 None
+    :return: 返回 entry，找不到则抛出异常
     """
 
     if isinstance(har, str) and os.path.exists(har):
         with open(har, "r", encoding="utf-8-sig") as f:
             har = json.load(f)
+    elif not isinstance(har, dict):
+        raise ValueError("har must be a dict or a valid file path")
 
     for entry in har['log']['entries']:
         if get_md5_from_entry(entry) == md5:
             return entry
 
-    return None
+    raise ValueError(f"entry with md5: |{md5}| not found in har file")

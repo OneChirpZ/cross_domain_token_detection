@@ -38,16 +38,8 @@ def find_tokens_in_headers(headers, level=0):
     tokens = {}
 
     for header in headers:
-        # 这里的key = 'name/value', value = 'Connection/Close...'，搜寻无效
-        # for key, value in header.items():
-        #     print(f"key:{key}, value:{value}")
-        #     if is_token_key(key, level):
-        #         tokens[key] = value
-        # 改为：
         if is_token_key(header['name'], level):
-            # debug
             # print(f"key: {header['name']}, value: {header['value']}")
-
             tokens[header['name']] = header['value']
 
     return tokens
@@ -62,13 +54,12 @@ def find_tokens_in_post_body(post_data, level=0):
     """
 
     tokens = {}
+    # 暂先只考虑了从mimeType为 'application/json' , 'application/x-www-form-urlencoded' 的表单数据里找token
 
-    # TODO: 从 post_body 中提取 tokens
-    # 暂先只考虑了从mimeType为 'application/json' , 'application/x-www-form-urlencoded'的表单数据里找token
-
-    # 根据 application/json 类型 postdata 里的 text 字典里的 key 来判断是否有 token 可能存在
+    # 根据 application/json 类型 post data 里的 text 字典里的 key 来判断是否有 token 可能存在
     if post_data['mimeType'] == 'application/json':
-        # 不以 { 或者 [ 开头，返回：sf_mad.har有一 text = 'datalist=...(部分可由base64解码)'，为避免 json.loads受影响用此方法将其过滤，详情见飞书
+        # 如果不以 { 或者 [ 开头，则返回
+        # sf_mad.har 有一段 text = 'datalist=...(部分可由base64解码)'，为避免 json.loads受影响用此方法将其过滤，详情见飞书
         if not (post_data['text'].startswith('[') or post_data['text'].startswith('{')):
             return tokens
 
