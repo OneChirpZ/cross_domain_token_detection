@@ -4,7 +4,7 @@ from urllib.parse import urlparse, parse_qs
 from base import is_token_key
 
 
-def find_tokens_in_url(url, level=0):
+def find_tokens_in_url(url, level=0, enable_stopwords=True):
     """
     从 URL 中提取 tokens
     :param url: 完整的 URL
@@ -18,7 +18,7 @@ def find_tokens_in_url(url, level=0):
     params = parse_qs(query)
 
     for key, values in params.items():
-        if is_token_key(key, level):
+        if is_token_key(key, level, enable_stopwords):
             if len(values) != 1:
                 raise ValueError(f'values has more than one item: {values}')
 
@@ -27,7 +27,7 @@ def find_tokens_in_url(url, level=0):
     return tokens
 
 
-def find_tokens_in_headers(headers, level=0):
+def find_tokens_in_headers(headers, level=0, enable_stopwords=True):
     """
     从 headers 中提取 tokens
     :param headers: headers 字典
@@ -38,14 +38,14 @@ def find_tokens_in_headers(headers, level=0):
     tokens = {}
 
     for header in headers:
-        if is_token_key(header['name'], level):
+        if is_token_key(header['name'], level, enable_stopwords):
             # print(f"key: {header['name']}, value: {header['value']}")
             tokens[header['name']] = header['value']
 
     return tokens
 
 
-def find_tokens_in_post_body(post_data, level=0):
+def find_tokens_in_post_body(post_data, level=0, enable_stopwords=True):
     """
     从 post_body 中提取 tokens
     :param post_data: post_data 字典
@@ -54,8 +54,8 @@ def find_tokens_in_post_body(post_data, level=0):
     """
 
     tokens = {}
-    # 暂先只考虑了从mimeType为 'application/json' , 'application/x-www-form-urlencoded' 的表单数据里找token
 
+    # 暂先只考虑了从mimeType为 'application/json' , 'application/x-www-form-urlencoded' 的表单数据里找token
     # 根据 application/json 类型 post data 里的 text 字典里的 key 来判断是否有 token 可能存在
     if post_data['mimeType'] == 'application/json':
         # 如果不以 { 或者 [ 开头，则返回
@@ -63,29 +63,28 @@ def find_tokens_in_post_body(post_data, level=0):
         if not (post_data['text'].startswith('[') or post_data['text'].startswith('{')):
             return tokens
 
-        # 将json文本转成字典对其key进行判断，符合的存入tokens
-        text_str = post_data['text']
-        text_dict = json.loads(text_str)
+        text_dict = json.loads(post_data['text'])
 
         # 如果解析出的是列表，并且列表不为空，则取出第一个元素
         if isinstance(text_dict, list) and len(text_dict) > 0:
-            text_dict = text_dict[0]
+            for t in text_dict:
+                for key, value in t.items():
+                    if is_token_key(key, level, enable_stopwords) and value != '':
+                        tokens[key] = value
 
-        for key, value in text_dict.items():
-            if is_token_key(key, level) and value != '':
-                tokens[key] = value
-                # debug
-                print(f"key: {key}, value: {value}")
+        elif isinstance(text_dict, dict):
+            for key, value in text_dict.items():
+                if is_token_key(key, level, enable_stopwords) and value != '':
+                    tokens[key] = value
 
-        return tokens
+        else:
+            raise ValueError(f'post_data["text"] is not a dict or a list, but "{type(text_dict)}"')
 
-    # 根据 application/x-www-form-urlencoded 类型 postdata 里的 params 里的 name 来判断是否有 token 可能存在
-    if post_data['mimeType'] == 'application/x-www-form-urlencoded':
-        for par in post_data['params']:
-            if is_token_key(par['name'], level):
-                tokens[par['name']] = par['value']
-                # debug
-                # print(f"name: {par['name']}, value: {par['value']}")
-        return tokens
+    # 根据 application/x-www-form-urlencoded 类型 post data 里的
+    # params 里的 name 来判断是否有 token 可能存在
+    elif post_data['mimeType'] == 'application/x-www-form-urlencoded':
+        for param in post_data['params']:
+            if is_token_key(param['name'], level, enable_stopwords):
+                tokens[param['name']] = param['value']
 
     return tokens

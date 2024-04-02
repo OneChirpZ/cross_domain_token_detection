@@ -4,7 +4,7 @@ token_prefixes = ['session', 'access', 'auth', 'oauth', 'user', 'client', 'api',
 token_others = ['jwt', 'bearer']
 
 # （compare）根据多请求共有的 value 识别 token
-stop_words_key_wait_list = ["Origin", "sec-ch-ua-platform", "SDK-Version", "Upload-Time", "Sec-Fetch-Site"]
+stop_words_key_wait_list = ["Origin", "sec-ch-ua-platform", "SDK-Version", "Upload-Time", "Sec-Fetch-Site", "M-APPKEY"]
 stop_words_key = list({s.lower() for s in (['accept-encoding', 'connection', 'content-length', 'content-type',
                                             'host', 'hosts', 'accept-encoding', 'accept-language', 'user-agent',
                                             'sessionid', 'referer', 'cache-control', 'X-MMe-Client-Info'] +

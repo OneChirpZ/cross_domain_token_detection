@@ -1,3 +1,4 @@
+import json
 from urllib.parse import urlparse, parse_qs
 
 from global_config import stop_words_key, min_token_len
@@ -24,13 +25,17 @@ def get_values_from_entry(entry, enable_stopwords=True, min_len=min_token_len):
                                              enable_stopwords=enable_stopwords,
                                              min_len=min_len)
 
+    values_post_body = get_values_from_post_body(entry['request']['postData'],
+                                                 enable_stopwords=enable_stopwords,
+                                                 min_len=min_len)
+
     # try:
     #     values_cookies = get_values_from_cookies(entry['request']['cookies'], enable_stopwords)
     # except ValueError as e:
     #     print(f"error: {e}")
     #     print(f"entry: {json.dumps(entry, ensure_ascii=False, sort_keys=True, indent=2)}")
 
-    return list(set(values_url + values_headers + values_cookies))
+    return list(set(values_url + values_headers + values_cookies + values_post_body))
 
 
 def get_values_from_headers(headers, enable_stopwords=True, min_len=min_token_len):
@@ -137,3 +142,59 @@ def get_values_from_url(url, enable_stopwords=True, min_len=min_token_len):
             res_values.append(value)
 
     return list(set(res_values))
+
+
+def get_values_from_post_body(post_data, enable_stopwords=True, min_len=min_token_len):
+    """
+    从 post_body 中提取 values
+    :param min_len: 最小 token 长度
+    :param post_data: post_data 字典
+    :param enable_stopwords: 是否启用 stopwords 过滤
+    :return: 返回提取到的 values 列表
+    """
+
+    values = []
+
+    if post_data['mimeType'] == 'application/json':
+        if not (post_data['text'].startswith('[') or post_data['text'].startswith('{')):
+            return values
+
+        post_data_text = json.loads(post_data['text'])
+        if isinstance(post_data_text, dict):
+            for key, value in post_data_text.items():
+                if enable_stopwords and key.lower() in stop_words_key:
+                    continue
+
+                if len(str(value)) < min_len:
+                    continue
+
+                values.append(str(value))
+
+        elif isinstance(post_data_text, list):
+            for list_item in post_data_text:
+                if isinstance(list_item, dict):
+                    for key, value in list_item.items():
+                        if enable_stopwords and key.lower() in stop_words_key:
+                            continue
+
+                        if len(str(value)) < min_len:
+                            continue
+
+                        values.append(str(value))
+                else:
+                    raise ValueError(f'list_item is not a dict, but {type(list_item)}')
+
+        else:
+            raise ValueError(f'post_data_text is not a dict or list, but {type(post_data_text)}')
+
+    elif post_data['mimeType'] == 'application/x-www-form-urlencoded':
+        for param in post_data['params']:
+            if enable_stopwords and param['name'] and param['name'].lower() in stop_words_key:
+                continue
+
+            if len(str(param['value'])) < min_len:
+                continue
+
+            values.append(str(param['value']))
+
+    return list(set(values))
