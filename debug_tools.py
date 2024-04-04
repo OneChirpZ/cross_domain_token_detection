@@ -93,9 +93,16 @@ def get_entry_by_md5(har, md5):
     return None
 
 
+def url_decode(target_url):
+    """URL 解码"""
+    import urllib.parse
+    return urllib.parse.unquote(target_url)
+
+
 if __name__ == '__main__':
     menu = ['1. 通过 md5 查找 entry',
-            '2. 查找包含特定字符串的 entry', ]
+            '2. 查找包含特定字符串的 entry',
+            '3. URL 解码', ]
     menu_text = "\n".join(menu) + "\n请选择操作："
 
     while True:
@@ -124,6 +131,11 @@ if __name__ == '__main__':
                 only_hash = False
 
             get_entries_with_str(target_str, only_hash=only_hash)
+
+        elif option == "3":
+            url = input("输入待解码的 URL: ")
+            print(f'解码前的 url: |{url}|')
+            print(f'解码后的 url: |{url_decode(url)}|')
 
         else:
             print("无效输入，请重新输入")

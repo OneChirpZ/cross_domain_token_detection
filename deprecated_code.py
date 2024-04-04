@@ -1,5 +1,5 @@
 # # from main.py
-# def test_keyname_compare(only_hash=False, enable_print=True):
+# def test_keyname_compare(only_hash=False, enable_verbose_print=True):
 #     """
 #     测试 find_tokens_by_keyname 和 find_tokens_by_compare
 #     :param only_hash: 只测试 add_md5_to_entries.py 预处理后的 har 文件（带 _md5.har 后缀）
@@ -19,12 +19,12 @@
 #             print(f"\n{bold_split}\nFind tokens by keyname, processing {har_file}...\n")
 #
 #             res_keyname = find_tokens_by_keyname(har,
-#                                                  enable_print=enable_print)
+#                                                  enable_verbose_print=enable_verbose_print)
 #
 #             print(f"\n{bold_split}\nFind tokens by compare, processing {har_file}...\n")
 #
 #             res_compare = find_tokens_by_compare(har,
-#                                                  enable_print=enable_print,
+#                                                  enable_verbose_print=enable_verbose_print,
 #                                                  only_multi=True)
 #
 #             print(f"{bold_split}")

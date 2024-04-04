@@ -1,7 +1,8 @@
 import json
 import os
+import time
 
-from base import get_md5_from_entry
+from base import get_md5_from_entry, select_test_files_by_date
 from debug_tools import get_entry_by_md5
 from find_tokens import find_tokens_in_url, find_tokens_in_headers, find_tokens_in_post_body
 from get_values import get_values_from_entry
@@ -57,9 +58,10 @@ def find_tokens_by_keyname(har, enable_print=False, enable_stopwords=True):
     return res
 
 
-def find_tokens_by_compare(har, enable_print=False, only_multi=False, enable_stopwords=True):
+def find_tokens_by_compare(har, enable_print=False, show_skip_info=True, only_multi=False, enable_stopwords=True):
     """
     通过比较的方式，查找 har 中的 tokens
+    :param show_skip_info: 是否打印被跳过的 value 的信息
     :param enable_stopwords: 使用停用词过滤
     :param har: har 文件路径或 har 字典
     :param enable_print: 是否打印详细信息到控制台
@@ -89,18 +91,24 @@ def find_tokens_by_compare(har, enable_print=False, only_multi=False, enable_sto
                     value_dict[value] = [md5]
 
     if enable_print:
-
-        multi_count = len([v for v in value_dict.values() if len(v) > 1])
         for k, v in value_dict.items():
             if only_multi and len(v) == 1:
                 continue
             print(f"value: {k}\nappeared in request (md5): {v}\n{bold_split}")
 
+        multi_count = len([v for v in value_dict.values() if len(v) > 1])
         print(f"find {len(value_dict)} values, "
               f'{multi_count} appeared more than once in "{os.path.basename(har)}"\n'
               f"{bold_split}")
 
     if only_multi:
+        if show_skip_info:
+            skipped_values = [k for k, v in value_dict.items() if len(v) == 1]
+            if skipped_values:
+                print(f"Skipped values by 'only_multi': {skipped_values}")
+            else:
+                print(f"No value skipped by 'only_multi'")
+
         value_dict = {k: v for k, v in value_dict.items() if len(v) > 1}
 
     return value_dict
@@ -108,7 +116,8 @@ def find_tokens_by_compare(har, enable_print=False, only_multi=False, enable_sto
 
 def test_cross_domain_detection(file_list=None,
                                 only_hash=True,
-                                enable_print=False,
+                                enable_verbose_print=False,
+                                show_skip_info=False,
                                 only_multi=True,
                                 enable_stopwords=True):
     """
@@ -116,15 +125,18 @@ def test_cross_domain_detection(file_list=None,
     """
 
     def do_test(har_path):
+        start_time = time.time()
         file_name = os.path.basename(har_path)
         with open(har_path, "r", encoding="utf-8-sig") as f:
             har = json.load(f)
 
         print(f'\n{bold_split}\n'
-              f'Find tokens by compare, processing "{file_name}"...')
+              f'Find tokens by compare, processing "{file_name}"...\n'
+              f'{bold_split}')
 
         res_compare = find_tokens_by_compare(har,
-                                             enable_print=enable_print,
+                                             enable_print=enable_verbose_print,
+                                             show_skip_info=show_skip_info,
                                              only_multi=only_multi,
                                              enable_stopwords=enable_stopwords)
 
@@ -133,7 +145,7 @@ def test_cross_domain_detection(file_list=None,
             if len(md5_list) > 1:
                 url_list = []
                 for md5 in md5_list:
-                    url = get_entry_by_md5(har_path, md5)['request']['url']
+                    url = get_entry_by_md5(har, md5)['request']['url']
                     url_list.append((url, md5))
 
                 value_domain[value] = url_list
@@ -145,7 +157,7 @@ def test_cross_domain_detection(file_list=None,
                 have_cross_domain = True
                 group_domain = [get_domain(group[0][0], domain_level=0) for group in res]
 
-                print(f"token value: {value}\n"
+                print(f"value: {value}\n"
                       f"group by domain: {res}\n"
                       f"domain of each group: {group_domain}\n"
                       f"len of each group: {[len(g) for g in res]}\n"
@@ -154,7 +166,19 @@ def test_cross_domain_detection(file_list=None,
         if not have_cross_domain:
             print(f'No cross domain detected in "{file_name}".\n{bold_split}')
 
+        print(f'Test "{file_name}" done, time cost: {time.time() - start_time:.2f}s\n'
+              f'{bold_split}')
+
     # ----------------- 主测试代码 -----------------
+
+    print(f'test setup:\n'
+          f'    file_list: {file_list}\n'
+          f'    only_hash: {only_hash}\n'
+          f'    enable_verbose_print: {enable_verbose_print}\n'
+          f'    show_skip_info: {show_skip_info}\n'
+          f'    only_multi: {only_multi}\n'
+          f'    enable_stopwords: {enable_stopwords}\n'
+          f'{bold_split}\n')
 
     if file_list is None:
         count = 0
@@ -230,19 +254,21 @@ def compare_2_methods_res(har_path):
 
 
 if __name__ == '__main__':
-    test_file_list = [
-        'har_files/MeiTuan_240324_md5.har',
-        # 'har_files/GaoDe_240402_md5.har',
-    ]
+    test_file_list = select_test_files_by_date(only_hash=True)
 
-    # find_tokens_by_keyname("./har_files/meituan_md5.har", enable_print=True)
-    # find_tokens_by_compare("./har_files/GaoDe_240324_md5.har", enable_print=True, only_multi=True)
+    # find_tokens_by_keyname("./har_files/meituan_md5.har", enable_verbose_print=True)
+    # find_tokens_by_compare("./har_files/GaoDe_240324_md5.har", enable_verbose_print=True, only_multi=True)
 
-    # test_all(only_hash=True, enable_print=True)
+    # test_all(only_hash=True, enable_verbose_print=True)
 
     # test_cross_domain_detection()
     # test_cross_domain_detection(file_list=test_file_list, enable_stopwords=True)
 
-    compare_2_methods_res('har_files/MeiTuan_240324_md5.har')
+    test_cross_domain_detection(test_file_list,
+                                only_hash=True,
+                                enable_verbose_print=False,
+                                show_skip_info=True,
+                                only_multi=True,
+                                enable_stopwords=True)
 
     pass

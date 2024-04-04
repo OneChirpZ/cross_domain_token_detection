@@ -1,7 +1,8 @@
 import hashlib
 import json
+import os
 
-from global_config import token_key_names, token_others, stop_words_key
+from global_config import token_key_names, token_others, stop_words_key, bold_split
 
 
 def is_token_key(param_keyname, level=0, enable_stopwords=True):
@@ -51,3 +52,52 @@ def get_md5_from_entry(entry):
         entry['md5'] = entry_hash
 
     return entry['md5']
+
+
+def get_test_file_list(only_hash=True, enable_print=False):
+    """获取测试文件列表"""
+
+    def to_YYYY_MM_DD(date):
+        return f"20{date[:2]}-{date[2:4]}-{date[4:]}"
+
+    file_paths = {}
+    for root, dirs, files in os.walk("./har_files"):
+        for file in files:
+            if file.endswith('.har'):
+                if only_hash and not file.endswith("_md5.har"):
+                    continue
+                file_name, ext = os.path.splitext(file)
+                file_date = to_YYYY_MM_DD(file_name.split('_')[1])
+                file_paths.setdefault(file_date, []).append(os.path.join(root, file))
+
+    if enable_print:
+        for date in sorted(file_paths.keys()):
+            print(f"{date}: {len(file_paths[date])} files")
+            for file in file_paths[date]:
+                print(f"    {file}")
+
+    return file_paths
+
+
+def select_test_files_by_date(file_paths=None, only_hash=True):
+    """根据日期获取待测试的文件路径列表"""
+    if file_paths is None:
+        file_paths = get_test_file_list(only_hash=only_hash,
+                                        enable_print=False)
+
+    wanted_paths = []
+    for date in sorted(file_paths.keys(), reverse=True):
+        print(f"{date}: {len(file_paths[date])} files")
+        for file in file_paths[date]:
+            print(f"    {file}")
+
+        options = input("Add? Press y/n (default y): ")
+        if options.lower() != 'n':
+            wanted_paths.extend(file_paths[date])
+
+            ctn = input("Continue? Press y/n (default n): ")
+            if ctn.lower() != 'y':
+                break
+    print(bold_split)
+
+    return wanted_paths
