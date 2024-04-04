@@ -230,7 +230,10 @@ def compare_2_methods_res(har_path):
 
 
 if __name__ == '__main__':
-    test_file_list = ['har_files/MeiTuan_240402_md5.har']
+    test_file_list = [
+        'har_files/MeiTuan_240324_md5.har',
+        # 'har_files/GaoDe_240402_md5.har',
+    ]
 
     # find_tokens_by_keyname("./har_files/meituan_md5.har", enable_print=True)
     # find_tokens_by_compare("./har_files/GaoDe_240324_md5.har", enable_print=True, only_multi=True)
@@ -238,8 +241,8 @@ if __name__ == '__main__':
     # test_all(only_hash=True, enable_print=True)
 
     # test_cross_domain_detection()
-    test_cross_domain_detection(file_list=test_file_list, enable_stopwords=True)
+    # test_cross_domain_detection(file_list=test_file_list, enable_stopwords=True)
 
-    # compare_2_methods_res('har_files/MeiTuan_240324_md5.har')
+    compare_2_methods_res('har_files/MeiTuan_240324_md5.har')
 
     pass

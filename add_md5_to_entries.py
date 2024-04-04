@@ -4,6 +4,10 @@ import os
 
 
 def add_md5_to_entries(har_path):
+    if har_path.endswith('_md5.har'):
+        print(f"MD5 already added to entries: |{har_path}|")
+        return har_path
+
     new_file_path = har_path.replace('.har', '_md5.har')
     if os.path.exists(new_file_path):
         print(f"MD5 already added to entries: |{har_path}|")
