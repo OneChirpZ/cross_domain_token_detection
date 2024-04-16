@@ -4,6 +4,8 @@ import os
 from base import get_md5_from_entry
 from global_config import bold_split, thin_split
 
+import urllib.parse
+
 
 def print_entry_by_md5(md5, only_hash=True):
     """
@@ -61,12 +63,15 @@ def get_entries_with_str(target_str, only_hash=True, print_context=5):
     if total_count != 0:
         show_res = input("是否显示结果？(y/n)")
         if show_res.lower() != "n":
-            count = 0
+            har_count = 0
             for har_file_path, entry_res in res.items():
+                har_count += 1
+                entry_count = 0
                 for entry in entry_res:
-                    count += 1
+                    entry_count += 1
                     print(thin_split)
-                    print(f"entry {count} / {len(res)} | md5: {get_md5_from_entry(entry)} | har: {har_file_path}")
+                    print(f"entry {entry_count} / {len(entry_res)} | entry md5: {get_md5_from_entry(entry)}"
+                          f" | har {har_count} / {len(res)} | har: {har_file_path}")
                     print(thin_split)
 
                     entry_str = json.dumps(entry, ensure_ascii=False, indent=2)
@@ -119,7 +124,6 @@ def get_entry_by_md5(har, md5):
 
 def url_decode(target_url):
     """URL 解码"""
-    import urllib.parse
     return urllib.parse.unquote(target_url)
 
 

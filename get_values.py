@@ -4,12 +4,12 @@ from urllib.parse import urlparse, parse_qs
 from global_config import stop_words_key, min_token_len
 
 
-def get_values_from_entry(entry, enable_stopwords=True, min_len=min_token_len):
+def get_values_from_entry(entry, enable_stopwords=1, min_len=min_token_len):
     """
     从 entry 中提取 values
     :param min_len: 最小 token 长度
     :param entry: entry 字典
-    :param enable_stopwords: 是否启用过滤
+    :param enable_stopwords: 是否启用过滤, 0: 不启用, 1: 启用（key name 完美匹配）, 2: 启用（key name 中包含其一）
     :return: 返回提取到的 values 列表
     """
 
@@ -38,7 +38,7 @@ def get_values_from_entry(entry, enable_stopwords=True, min_len=min_token_len):
     return list(set(values_url + values_headers + values_cookies + values_post_body))
 
 
-def get_values_from_headers(headers, enable_stopwords=True, min_len=min_token_len):
+def get_values_from_headers(headers, enable_stopwords=1, min_len=min_token_len):
     """
     从 headers 中提取 values
     :param min_len: 最小 token 长度
@@ -51,7 +51,9 @@ def get_values_from_headers(headers, enable_stopwords=True, min_len=min_token_le
 
     for header_item in headers:
         # print(f"debug: header_item: {header_item}")
-        if enable_stopwords and header_item['name'].lower() in stop_words_key:
+        if enable_stopwords == 1 and header_item['name'].lower() in stop_words_key:
+            continue
+        if enable_stopwords == 2 and any(key_name in header_item['name'].lower() for key_name in stop_words_key):
             continue
 
         if header_item['name'].lower() == 'cookie':
@@ -71,7 +73,7 @@ def get_values_from_headers(headers, enable_stopwords=True, min_len=min_token_le
     return values
 
 
-def get_values_from_cookies(cookies, enable_stopwords=True, min_len=min_token_len):
+def get_values_from_cookies(cookies, enable_stopwords=1, min_len=min_token_len):
     """
     从 cookies 中提取 values，注意 entry['request']['headers'] 中，和 entry['request']['cookies'] 均有 cookie
     :param min_len: 最小 token 长度
@@ -91,8 +93,11 @@ def get_values_from_cookies(cookies, enable_stopwords=True, min_len=min_token_le
         for cookie in cookie_list:
             cookie_key, cookie_value = cookie.split('=', maxsplit=1)
 
-            if enable_stopwords and cookie_key.lower() in stop_words_key:
+            if enable_stopwords == 1 and cookie_key.lower() in stop_words_key:
                 continue
+            if enable_stopwords == 2 and any(key_name in cookie_key.lower() for key_name in stop_words_key):
+                continue
+
             if len(cookie_value) < min_len:
                 continue
 
@@ -113,7 +118,7 @@ def get_values_from_cookies(cookies, enable_stopwords=True, min_len=min_token_le
     return list(set(values))
 
 
-def get_values_from_url(url, enable_stopwords=True, min_len=min_token_len):
+def get_values_from_url(url, enable_stopwords=1, min_len=min_token_len):
     """
     从 URL 中提取 values
     :param min_len: 最小 token 长度
@@ -128,7 +133,9 @@ def get_values_from_url(url, enable_stopwords=True, min_len=min_token_len):
     params = parse_qs(query)
 
     for key, values in params.items():
-        if enable_stopwords and key.lower() in stop_words_key:
+        if enable_stopwords == 1 and key.lower() in stop_words_key:
+            continue
+        elif enable_stopwords == 2 and any(key_name in key.lower() for key_name in stop_words_key):
             continue
 
         for value in values:
@@ -144,7 +151,7 @@ def get_values_from_url(url, enable_stopwords=True, min_len=min_token_len):
     return list(set(res_values))
 
 
-def get_values_from_post_body(post_data, enable_stopwords=True, min_len=min_token_len):
+def get_values_from_post_body(post_data, enable_stopwords=1, min_len=min_token_len):
     """
     从 post_body 中提取 values
     :param min_len: 最小 token 长度
@@ -162,7 +169,9 @@ def get_values_from_post_body(post_data, enable_stopwords=True, min_len=min_toke
         post_data_text = json.loads(post_data['text'])
         if isinstance(post_data_text, dict):
             for key, value in post_data_text.items():
-                if enable_stopwords and key.lower() in stop_words_key:
+                if enable_stopwords == 1 and key.lower() in stop_words_key:
+                    continue
+                if enable_stopwords == 2 and any(key_name in key.lower() for key_name in stop_words_key):
                     continue
 
                 if len(str(value)) < min_len:
@@ -174,7 +183,9 @@ def get_values_from_post_body(post_data, enable_stopwords=True, min_len=min_toke
             for list_item in post_data_text:
                 if isinstance(list_item, dict):
                     for key, value in list_item.items():
-                        if enable_stopwords and key.lower() in stop_words_key:
+                        if enable_stopwords == 1 and key.lower() in stop_words_key:
+                            continue
+                        if enable_stopwords == 2 and any(key_name in key.lower() for key_name in stop_words_key):
                             continue
 
                         if len(str(value)) < min_len:

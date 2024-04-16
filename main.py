@@ -58,7 +58,7 @@ def find_tokens_by_keyname(har, enable_print=False, enable_stopwords=True):
     return res
 
 
-def find_tokens_by_compare(har, enable_print=False, show_skip_info=True, only_multi=False, enable_stopwords=True):
+def find_tokens_by_compare(har, enable_print=False, show_skip_info=True, only_multi=False, enable_stopwords=1):
     """
     通过比较的方式，查找 har 中的 tokens
     :param show_skip_info: 是否打印被跳过的 value 的信息
@@ -118,8 +118,9 @@ def test_cross_domain_detection(file_list=None,
                                 only_hash=True,
                                 enable_verbose_print=False,
                                 show_skip_info=False,
+                                show_entry_md5=False,
                                 only_multi=True,
-                                enable_stopwords=True):
+                                enable_stopwords=1):
     """
     测试跨域请求检测
     """
@@ -157,9 +158,12 @@ def test_cross_domain_detection(file_list=None,
                 have_cross_domain = True
                 group_domain = [get_domain(group[0][0], domain_level=0) for group in res]
 
-                print(f"value: {value}\n"
-                      f"group by domain: {res}\n"
-                      f"domain of each group: {group_domain}\n"
+                print(f"value: {value}")
+
+                if show_entry_md5:
+                    print(f"group by domain: {res}")
+
+                print(f"domain of each group: {group_domain}\n"
                       f"len of each group: {[len(g) for g in res]}\n"
                       f"{thin_split}")
 
@@ -272,7 +276,13 @@ if __name__ == '__main__':
                                 only_hash=True,
                                 enable_verbose_print=False,
                                 show_skip_info=False,
+                                show_entry_md5=False,
                                 only_multi=True,
-                                enable_stopwords=True)
+                                enable_stopwords=2)
 
     pass
+
+'''
+记录 TODO
+1. by_keyname 似乎也需要加入进来（有些 token 可能只在向外发的时候出现了一次，但这种情况可能不好确定 token 的能力）
+'''
