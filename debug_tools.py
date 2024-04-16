@@ -28,10 +28,10 @@ def print_entry_by_md5(md5, only_hash=True):
     print(f"\n未找到 md5 为 {md5} 的 entry")
 
 
-def get_entries_with_str(target_str, only_hash=True):
+def get_entries_with_str(target_str, only_hash=True, print_context=5):
     har_files = os.listdir("./har_files")
 
-    res = []
+    res = {}
     for har_file in har_files:
         if har_file.endswith(".har"):
             if only_hash and not har_file.endswith("_md5.har"):
@@ -39,24 +39,48 @@ def get_entries_with_str(target_str, only_hash=True):
 
             har_file_path = os.path.join("./har_files", har_file)
 
-            res += get_entries_with_str_in_har(har_file_path, target_str)
+            res.update(get_entries_with_str_in_har(har_file_path, target_str))
 
-    print(f'找到 {len(res)} 个 entry，包含字符串 "{target_str}"')
+    total_count = 0
+    not_found_file = []
+    for har_path, entries in res.items():
+        if len(entries) != 0:
+            total_count += len(entries)
+        else:
+            not_found_file.append(har_path)
 
-    if len(res) != 0:
+    print(f"未找到包含字符串 '{target_str}' 的 entry 的 har 文件：")
+    for file in not_found_file:
+        print(f"    {os.path.basename(file)}")
+
+    print(f"找到 {total_count} 个 entry 符合条件：")
+    for har_file_path, entry_res in res.items():
+        if len(entry_res) != 0:
+            print(f"    {os.path.basename(har_file_path)}: {len(entry_res)}")
+
+    if total_count != 0:
         show_res = input("是否显示结果？(y/n)")
         if show_res.lower() != "n":
             count = 0
-            for entry in res:
-                count += 1
-                print(f"{thin_split}\n"
-                      f"entry {count} / {len(res)}:\n"
-                      f"{json.dumps(entry, ensure_ascii=False, indent=2)}\n"
-                      f"{thin_split}")
+            for har_file_path, entry_res in res.items():
+                for entry in entry_res:
+                    count += 1
+                    print(thin_split)
+                    print(f"entry {count} / {len(res)} | md5: {get_md5_from_entry(entry)} | har: {har_file_path}")
+                    print(thin_split)
+
+                    entry_str = json.dumps(entry, ensure_ascii=False, indent=2)
+                    entry_str = entry_str.split('\n')
+                    for i, line in enumerate(entry_str):
+                        if target_str in line:
+                            for j in range(i - print_context, i + print_context + 1):
+                                if 0 <= j < len(entry_str):
+                                    print(entry_str[j])
+                            break
 
 
 def get_entries_with_str_in_har(har_path, target_str):
-    """在 har 的 entries 中，查找包含特定字符串的 entry，返回符合条件的 entry 列表"""
+    """在 har 的 entries 中，查找包含特定字符串的 entry，返回 dit: {har_path: 符合条件的 entry 列表}"""
 
     with open(har_path, "r", encoding="utf-8-sig") as f:
         har = json.load(f)
@@ -69,7 +93,7 @@ def get_entries_with_str_in_har(har_path, target_str):
         if target_str in entry_str:
             res.append(entry)
 
-    return res
+    return {har_path: res}
 
 
 def get_entry_by_md5(har, md5):
@@ -130,7 +154,13 @@ if __name__ == '__main__':
             else:
                 only_hash = False
 
-            get_entries_with_str(target_str, only_hash=only_hash)
+            short_print = input('只显示关键词前后 x 行？(默认 5, 输入 0 为完整打印): ')
+            if short_print == "":
+                short_print = 5
+            else:
+                short_print = int(short_print)
+
+            get_entries_with_str(target_str, only_hash=only_hash, print_context=int(short_print))
 
         elif option == "3":
             url = input("输入待解码的 URL: ")
