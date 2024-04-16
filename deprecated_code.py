@@ -2,7 +2,7 @@
 # def test_keyname_compare(only_hash=False, enable_verbose_print=True):
 #     """
 #     测试 find_tokens_by_keyname 和 find_tokens_by_compare
-#     :param only_hash: 只测试 add_md5_to_entries.py 预处理后的 har 文件（带 _md5.har 后缀）
+#     :param only_hash: 只测试 pre_process.py 预处理后的 har 文件（带 _md5.har 后缀）
 #     """
 #
 #     har_files = os.listdir("./har_files")

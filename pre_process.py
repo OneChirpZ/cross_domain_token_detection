@@ -30,16 +30,19 @@ def add_md5_to_entries(har_path):
     return new_file_path
 
 
-def add_all():
+def add_md5_all():
     har_files_dir = os.listdir("./har_files")
     for har_file in har_files_dir:
         if har_file.endswith('.har'):
-            add_md5_to_entries(f"./har_files/{har_file}")
+            old_file_path = f"./har_files/{har_file}"
+            new_file_path = add_md5_to_entries(old_file_path)
+            if new_file_path != old_file_path:
+                os.rename(old_file_path, f"./har_files/filtered_no_md5/{har_file}")
 
 
 if __name__ == '__main__':
     user_input = input("This script will add MD5 hash to each entry in all HAR files in ./har_files directory.\n"
                        "Press y to continue: ")
     if user_input.lower() == 'y':
-        add_all()
+        add_md5_all()
     pass
