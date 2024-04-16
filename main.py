@@ -172,8 +172,12 @@ def test_cross_domain_detection(file_list=None,
     # ----------------- 主测试代码 -----------------
 
     print(f'test setup:\n'
-          f'    file_list: {file_list}\n'
-          f'    only_hash: {only_hash}\n'
+          f'    file_list:')
+
+    for file_path in file_list:
+        print(f'        "{file_path}",')
+
+    print(f'    only_hash: {only_hash}\n'
           f'    enable_verbose_print: {enable_verbose_print}\n'
           f'    show_skip_info: {show_skip_info}\n'
           f'    only_multi: {only_multi}\n'
@@ -267,7 +271,7 @@ if __name__ == '__main__':
     test_cross_domain_detection(test_file_list,
                                 only_hash=True,
                                 enable_verbose_print=False,
-                                show_skip_info=True,
+                                show_skip_info=False,
                                 only_multi=True,
                                 enable_stopwords=True)
 

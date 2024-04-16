@@ -2,7 +2,7 @@ import hashlib
 import json
 import os
 
-from global_config import token_key_names, token_others, stop_words_key, bold_split
+from global_config import token_key_names, token_others, stop_words_key, bold_split, thin_split
 
 
 def is_token_key(param_keyname, level=0, enable_stopwords=True):
@@ -91,13 +91,16 @@ def select_test_files_by_date(file_paths=None, only_hash=True):
         for file in file_paths[date]:
             print(f"    {file}")
 
-        options = input("Add? Press y/n (default y): ")
+        options = input("Add? Press y/n (default add): ")
         if options.lower() != 'n':
             wanted_paths.extend(file_paths[date])
 
-            ctn = input("Continue? Press y/n (default n): ")
-            if ctn.lower() != 'y':
-                break
+        ctn = input("Continue? Press y/n (default continue): ")
+        if ctn.lower() == 'n':
+            break
+
+        print(f"\n{thin_split}")
+
     print(bold_split)
 
     return wanted_paths
