@@ -168,8 +168,9 @@ if __name__ == '__main__':
 
         elif option == "3":
             url = input("输入待解码的 URL: ")
-            print(f'解码前的 url: |{url}|')
-            print(f'解码后的 url: |{url_decode(url)}|')
+            print(f'解码前的 url: \n{url}'
+                  f'')
+            print(f'解码后的 url: \n{url_decode(url)}')
 
         else:
             print("无效输入，请重新输入")

@@ -19,6 +19,9 @@ stop_words_key = list({s.lower() for s in (['accept-encoding', 'connection', 'co
 # 提取的 token value 的最小长度
 min_token_len = 8
 
+# 主机名屏蔽列表
+hostname_blacklist = ['localhost', '127.0.0.1', '0.0.0.0']
+
 # 输出分隔符
-bold_split = '==============================================================='
-thin_split = '---------------------------------------------------------------'
+bold_split = r'=' * 60
+thin_split = r'-' * 60

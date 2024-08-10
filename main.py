@@ -13,6 +13,7 @@ from detect_cross_domain import *
 def find_tokens_by_keyname(har, enable_print=False, enable_stopwords=True):
     """
     遍历 HAR 中记录的请求，在请求头和 url 中查找 token
+    :param enable_stopwords: 使用停用词过滤
     :param enable_print: 是否打印详细信息到控制台
     :param har: har 文件路径或 har 字典
     :return: dict
@@ -85,10 +86,7 @@ def find_tokens_by_compare(har, enable_print=False, show_skip_info=True, only_mu
 
         if values:
             for value in values:
-                if value in value_dict.keys():
-                    value_dict[value].append(md5)
-                else:
-                    value_dict[value] = [md5]
+                value_dict.setdefault(value, []).append(md5)
 
     if enable_print:
         for k, v in value_dict.items():
